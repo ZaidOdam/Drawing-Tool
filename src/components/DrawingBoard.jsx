@@ -4,8 +4,8 @@ import {
   calculateDistance,
   findPointAtDistance,
   getCommonPoint,
+  getControlPoint,
   isSamePoint,
-  radianToDegree,
 } from "../utils/helper";
 import { AiOutlineClear } from "react-icons/ai";
 import { PiLineSegmentBold } from "react-icons/pi";
@@ -17,19 +17,19 @@ const WIDTH = window.innerWidth * 0.8;
 // const HEIGHT = window.innerHeight * 0.8;
 const GRID_UNIT = 20;
 
-export const DrawingBoard = () => {
+export function DrawingBoard() {
   const canvasRef = useRef(null);
   const namePointer = useRef(65);
   const selectedLineName = useRef(null);
   const [lines, setLines] = useState([]);
   const [startPoint, setStartPoint] = useState(null);
-  const [toolActive, setToolActive] = useState("");
+  const [toolActive, setToolActive] = useState(null);
 
   function renderGrid(gridSpacing) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    ctx.strokeStyle = "#ccc";
+    ctx.strokeStyle = "#f0f0f0";
     for (let x = 0; x < canvas.width; x += gridSpacing) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -43,7 +43,7 @@ export const DrawingBoard = () => {
       ctx.lineTo(canvas.width, y);
       ctx.stroke();
     }
-    ctx.strokeStyle = "#000";
+    ctx.strokeStyle = "#4F4F4F";
     ctx.font = "14px Arial";
   }
 
@@ -103,39 +103,52 @@ export const DrawingBoard = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    const angleCenterX = center.x;
-    const angleCenterY = center.y;
+    // const angleCenterX = center.x;
+    // const angleCenterY = center.y;
 
-    let startAngle = Math.atan2(start.y - angleCenterY, start.x - angleCenterX);
-    let endAngle = Math.atan2(end.y - angleCenterY, end.x - angleCenterX);
+    // let startAngle = Math.atan2(start.y - angleCenterY, start.x - angleCenterX);
+    // let endAngle = Math.atan2(end.y - angleCenterY, end.x - angleCenterX);
 
-    const startAngleDeg = radianToDegree(startAngle);
-    const endAngleDeg = radianToDegree(endAngle);
+    // const startAngleDeg = radianToDegree(startAngle);
+    // const endAngleDeg = radianToDegree(endAngle);
 
-    const diff = Math.abs(Math.round(startAngleDeg - endAngleDeg));
-    let direction = false;
-    if (
-      (startAngleDeg > endAngleDeg && diff === angle) ||
-      (startAngleDeg < 270 && diff != angle)
-    ) {
-      direction = true;
-    }
-    // console.log(angle, startAngleDeg, endAngleDeg, diff);
+    // const diff = Math.abs(Math.round(startAngleDeg - endAngleDeg));
+    // let direction = false;
+    // if (
+    //   (startAngleDeg > endAngleDeg && diff === angle) ||
+    //   (startAngleDeg < 270 && diff != angle)
+    // ) {
+    //   direction = true;
+    // }
+    // // console.log(angle, startAngleDeg, endAngleDeg, diff);
 
+    // ctx.beginPath();
+    // ctx.arc(angleCenterX, angleCenterY, 30, startAngle, endAngle, direction);
+    // ctx.stroke();
+
+    const arc1 = findPointAtDistance({ start: center, end: start }, 30);
+    const arc2 = findPointAtDistance({ start: center, end }, 30);
+    const controlPoint = getControlPoint(arc1, center, arc2);
     ctx.beginPath();
-    ctx.arc(angleCenterX, angleCenterY, 30, startAngle, endAngle, direction);
+    ctx.moveTo(arc1.x, arc1.y);
+    ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, arc2.x, arc2.y);
     ctx.stroke();
 
-    const textDistance = 60;
-    const p1 = findPointAtDistance({ start: center, end: start }, textDistance);
-    const p2 = findPointAtDistance({ start: center, end }, textDistance);
+    // const textDistance = 30;
+    // const p1 = findPointAtDistance({ start: center, end: start }, textDistance);
+    // const p2 = findPointAtDistance({ start: center, end }, textDistance);
+    // const centerPoint = getControlPoint(p1, center, p2);
 
-    const textX = (p1.x + p2.x) / 2;
-    const textY = (p1.y + p2.y) / 2;
+    // const textX = (p1.x + p2.x) / 2;
+    // const textY = (p1.y + p2.y) / 2;
 
     // console.log(direction, startAngleDeg, endAngleDeg);
 
-    ctx.fillText(`${angle}°`, textX, textY);
+    ctx.fillText(
+      `${isNaN(angle) ? 180 : angle}°`,
+      controlPoint.x,
+      controlPoint.y
+    );
   }
 
   const clearScreen = () => {
@@ -169,6 +182,7 @@ export const DrawingBoard = () => {
     namePointer.current = 65;
     setLines([]);
     clearScreen();
+    setToolActive(null);
   };
 
   function getProps() {
@@ -259,6 +273,7 @@ export const DrawingBoard = () => {
             onClick={() => {
               setToolActive("select");
             }}
+            className={toolActive === "select" ? "active" : ""}
           >
             <BiSolidHand />
           </button>
@@ -269,4 +284,4 @@ export const DrawingBoard = () => {
       </div>
     </>
   );
-};
+}

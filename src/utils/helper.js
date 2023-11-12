@@ -96,3 +96,41 @@ export function getCommonPoint(l1, l2) {
     return l1.end;
   return null;
 }
+
+export function getControlPoint(start, center, end) {
+  const vertex = center;
+
+  const adjacentVertices = [start, end];
+
+  const vector1 = {
+    x: adjacentVertices[0].x - vertex.x,
+    y: adjacentVertices[0].y - vertex.y,
+  };
+  const vector2 = {
+    x: adjacentVertices[1].x - vertex.x,
+    y: adjacentVertices[1].y - vertex.y,
+  };
+
+  const angleBisector = {
+    x: vector1.x + vector2.x,
+    y: vector1.y + vector2.y,
+  };
+
+  const angleBisectorMagnitude = Math.sqrt(
+    angleBisector.x ** 2 + angleBisector.y ** 2
+  );
+
+  const fourthPointDistance = 1.5 * Math.sqrt(vector1.x ** 2 + vector1.y ** 2);
+
+  const normalizedAngleBisector = {
+    x: angleBisector.x / angleBisectorMagnitude,
+    y: angleBisector.y / angleBisectorMagnitude,
+  };
+
+  const fourthPoint = {
+    x: vertex.x + fourthPointDistance * normalizedAngleBisector.x,
+    y: vertex.y + fourthPointDistance * normalizedAngleBisector.y,
+  };
+
+  return fourthPoint;
+}
