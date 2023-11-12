@@ -1,3 +1,8 @@
+body{
+  height: 100vh;
+  overflow: hidden;
+}
+
 .canvas-container {
   display: flex;
   justify-content: center;

@@ -2,31 +2,30 @@ import { useEffect, useRef, useState } from "react";
 import {
   calculateAngle,
   calculateDistance,
-  findLine,
   findPointAtDistance,
-  getPointOnCanvas,
-  getPointsFromLines,
+  getCommonPoint,
+  isSamePoint,
   radianToDegree,
 } from "../utils/helper";
 import { AiOutlineClear } from "react-icons/ai";
 import { PiLineSegmentBold } from "react-icons/pi";
 import { BiSolidHand } from "react-icons/bi";
+import * as lineTool from "./tools/line";
+import * as selectTool from "./tools/select";
 
 const WIDTH = window.innerWidth * 0.8;
-const HEIGHT = 500;
+// const HEIGHT = window.innerHeight * 0.8;
 const GRID_UNIT = 20;
 
 export const DrawingBoard = () => {
   const canvasRef = useRef(null);
   const namePointer = useRef(65);
+  const selectedLineName = useRef(null);
   const [lines, setLines] = useState([]);
-  const [angles, setAngles] = useState([]);
   const [startPoint, setStartPoint] = useState(null);
-  const [toolActive, setToolActive] = useState(false);
-  const [selectActive, setSelectActive] = useState(false);
+  const [toolActive, setToolActive] = useState("");
 
   function renderGrid(gridSpacing) {
-    // console.log("Grid");
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
@@ -45,7 +44,7 @@ export const DrawingBoard = () => {
       ctx.stroke();
     }
     ctx.strokeStyle = "#000";
-    ctx.font = "12px Arial";
+    ctx.font = "14px Arial";
   }
 
   function drawPoint(ctx, point, name) {
@@ -56,6 +55,23 @@ export const DrawingBoard = () => {
     ctx.fill();
     name && ctx.fillText(name, point.x - 10, point.y - 10);
   }
+
+  const renderAngles = (lines) => {
+    for (let i = 0; i < lines.length; i++) {
+      const l1 = lines[i];
+      for (let j = i + 1; j < lines.length; j++) {
+        const l2 = lines[j];
+        const commonPoint = getCommonPoint(l1, l2);
+        if (!commonPoint) continue;
+
+        const start = isSamePoint(l1.start, commonPoint) ? l1.end : l1.start;
+        const end = isSamePoint(l2.start, commonPoint) ? l2.end : l2.start;
+
+        const angle = calculateAngle(start, commonPoint, end);
+        renderAngle({ start, center: commonPoint, end, angle });
+      }
+    }
+  };
 
   const renderLine = (newLine) => {
     const canvas = canvasRef.current;
@@ -130,109 +146,13 @@ export const DrawingBoard = () => {
     renderGrid(GRID_UNIT);
   };
 
-  const updateAnglesAndName = ({ start, center, end, name }) => {
-    // console.log(start, center, end, name);
+  const renderName = ({ name }) => {
     if (!name) {
       const updatedName = String.fromCharCode(namePointer.current);
       namePointer.current += 1;
       return updatedName;
     }
-    const angle = calculateAngle(start, center, end);
-    const newAngle = {
-      start,
-      center,
-      end,
-      angle,
-    };
-    setAngles((prevAngles) => [...prevAngles, newAngle]);
     return name;
-  };
-
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    if (!toolActive) return;
-    const canvas = canvasRef.current;
-    const { x, y } = getPointOnCanvas(e, canvas);
-    // setStartPoint({ x, y });
-    const points = getPointsFromLines(lines);
-    const THRESHOLD = 30;
-    let closedPoint = { x, y };
-    let minDistance = THRESHOLD;
-    points.forEach((point) => {
-      const distance = calculateDistance(point, { x, y });
-      if (distance < minDistance) {
-        minDistance = distance;
-        closedPoint = point;
-      }
-    });
-    // console.log(closedPoint);
-    setStartPoint(closedPoint);
-  };
-
-  const handleMouseMove = (e) => {
-    e.preventDefault();
-    if (!startPoint) return;
-    const canvas = canvasRef.current;
-    // const ctx = canvas.getContext("2d");
-    const { x, y } = getPointOnCanvas(e, canvas);
-    clearScreen();
-
-    const newLine = {
-      start: startPoint,
-      end: { x, y },
-    };
-
-    [...lines, newLine].forEach((line) => {
-      renderLine(line);
-    });
-
-    angles.forEach((angle) => {
-      renderAngle(angle);
-    });
-
-    // renderLine(newLine);
-
-    // ctx.lineWidth = 2;
-    // ctx.beginPath();
-    // ctx.moveTo(startPoint.x, startPoint.y);
-    // ctx.lineTo(x, y);
-    // ctx.stroke();
-  };
-
-  const handleMouseUp = (e) => {
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    const endPoint = getPointOnCanvas(e, canvas);
-
-    const startData = findLine(lines, startPoint);
-    const endData = findLine(lines, endPoint);
-    // console.log("Start Data", startData);
-    // console.log("End Data", endData);
-
-    const startName = updateAnglesAndName({
-      start: endPoint,
-      center: startData.start,
-      end: startData.end,
-      name: startData.name,
-    });
-
-    const endName = updateAnglesAndName({
-      start: endData.end,
-      center: endData.start,
-      end: startPoint,
-      name: endData.name,
-    });
-
-    // console.log(startName, endName);
-
-    const newLine = {
-      start: startData.start ?? startPoint,
-      end: endData.start ?? endPoint,
-      startName,
-      endName,
-    };
-    setLines((prevLines) => [...prevLines, newLine]);
-    setStartPoint(null);
   };
 
   useEffect(() => {
@@ -242,54 +162,102 @@ export const DrawingBoard = () => {
       renderLine(line);
     });
 
-    angles.forEach((angle) => {
-      renderAngle(angle);
-    });
-  }, [lines, angles]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.addEventListener("pointerdown", handleMouseDown);
-      canvas.addEventListener("pointerup", handleMouseUp);
-      canvas.addEventListener("pointermove", handleMouseMove);
-    }
-
-    return () => {
-      canvas.removeEventListener("pointerdown", handleMouseDown);
-      canvas.removeEventListener("pointerup", handleMouseUp);
-      canvas.removeEventListener("pointermove", handleMouseMove);
-    };
-  }, []);
+    renderAngles(lines);
+  }, [lines]);
 
   const handleClearCanvas = () => {
     namePointer.current = 65;
     setLines([]);
-    setAngles([]);
     clearScreen();
+  };
+
+  function getProps() {
+    return {
+      canvasRef,
+      lines,
+      setStartPoint,
+      startPoint,
+      clearScreen,
+      setLines,
+      renderLine,
+      renderAngles,
+      renderName,
+      selectedLineName,
+    };
+  }
+
+  const handleMouseDown = (e) => {
+    const props = getProps();
+    switch (toolActive) {
+      case "line": {
+        return lineTool.handleMouseDown(e, props);
+      }
+      case "select": {
+        return selectTool.handleMouseDown(e, props);
+      }
+      default:
+        break;
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    const props = getProps();
+    switch (toolActive) {
+      case "line": {
+        return lineTool.handleMouseMove(e, props);
+      }
+      case "select": {
+        return selectTool.handleMouseMove(e, props);
+      }
+      default:
+        break;
+    }
+  };
+
+  const handleMouseUp = (e) => {
+    const props = getProps();
+    switch (toolActive) {
+      case "line": {
+        return lineTool.handleMouseUp(e, props);
+      }
+      case "select": {
+        return selectTool.handleMouseUp(e, props);
+      }
+      default:
+        break;
+    }
   };
 
   return (
     <>
       <div className="canvas-container">
         <canvas
+          id="canvas"
           ref={canvasRef}
-          height={HEIGHT}
+          height="500px"
           width={WIDTH}
-          style={{ cursor: toolActive ? "crosshair" : "default" }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onTouchStart={handleMouseDown}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
+          onMouseOut={handleMouseUp}
+          style={{ cursor: toolActive === "line" ? "crosshair" : "default" }}
         />
         <div className="toolBox">
           <button
             onClick={() => {
-              setToolActive(!toolActive);
+              setToolActive("line");
             }}
-            className={toolActive ? "active" : ""}
+            className={toolActive === "line" ? "active" : ""}
           >
             <PiLineSegmentBold />
           </button>
           <button
             onClick={() => {
-              setSelectActive(!selectActive);
+              setToolActive("select");
             }}
           >
             <BiSolidHand />

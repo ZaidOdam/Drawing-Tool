@@ -77,8 +77,22 @@ export function calculateAngle(A, B, C) {
 }
 
 export function getPointOnCanvas(e, canvas) {
+  // console.log(e);
+  if (!e) return { x: 0, y: 0 };
   return {
-    x: e.clientX - canvas.offsetLeft,
-    y: e.clientY - canvas.offsetTop,
+    x: (e?.clientX ?? e?.changedTouches[0]?.clientX ?? 0) - canvas.offsetLeft,
+    y: (e?.clientY ?? e?.changedTouches[0]?.clientY ?? 0) - canvas.offsetTop,
   };
+}
+
+export function isSamePoint(p1, p2) {
+  return p1.x === p2.x && p1.y == p2.y;
+}
+
+export function getCommonPoint(l1, l2) {
+  if (isSamePoint(l1.start, l2.start) || isSamePoint(l1.start, l2.end))
+    return l1.start;
+  if (isSamePoint(l1.end, l2.start) || isSamePoint(l1.end, l2.end))
+    return l1.end;
+  return null;
 }
