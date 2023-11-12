@@ -29,21 +29,26 @@ export function DrawingBoard() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    ctx.strokeStyle = "#f0f0f0";
-    for (let x = 0; x < canvas.width; x += gridSpacing) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
+    // ctx.strokeStyle = "#f0f0f0";
+    for (let x = gridSpacing; x < canvas.width; x += gridSpacing) {
+      for (let y = gridSpacing; y < canvas.height; y += gridSpacing) {
+        const pointRadius = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, pointRadius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#4F4F4F2e";
+        ctx.fillStyle = "#4F4F4F2e";
+        ctx.fill();
+        ctx.stroke();
+      }
     }
 
-    for (let y = 0; y < canvas.height; y += gridSpacing) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = "#4F4F4F";
+    // const line = {
+    //   start: { x: 2 * gridSpacing, y: 2 * gridSpacing },
+    //   end: { x: 6 * gridSpacing, y: 2 * gridSpacing },
+    // };
+    // renderLine(line);
+
+    ctx.strokeStyle = "4F4F4F";
     ctx.font = "14px Arial";
   }
 
@@ -51,8 +56,10 @@ export function DrawingBoard() {
     const pointRadius = 5;
     ctx.beginPath();
     ctx.arc(point.x, point.y, pointRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "#4F4F4F";
     ctx.fillStyle = "black";
     ctx.fill();
+    ctx.stroke();
     name && ctx.fillText(name, point.x - 10, point.y - 10);
   }
 
@@ -76,6 +83,7 @@ export function DrawingBoard() {
   const renderLine = (newLine) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
     const distance = (
       calculateDistance(newLine.start, newLine.end) /
       (4 * GRID_UNIT)
@@ -89,6 +97,9 @@ export function DrawingBoard() {
       center: { x: centerX, y: centerY + 15 },
     };
     ctx.lineWidth = 2;
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "#4F4F4F";
+    ctx.font = "bold 14px Arial";
     ctx.beginPath();
     ctx.moveTo(line.start.x, line.start.y);
     ctx.lineTo(line.end.x, line.end.y);
@@ -152,7 +163,6 @@ export function DrawingBoard() {
   }
 
   const clearScreen = () => {
-    // console.log("Clear");
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
