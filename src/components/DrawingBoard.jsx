@@ -23,6 +23,7 @@ export const DrawingBoard = () => {
   const [angles, setAngles] = useState([]);
   const [startPoint, setStartPoint] = useState(null);
   const [toolActive, setToolActive] = useState(false);
+  const [selectActive, setSelectActive] = useState(false);
 
   function renderGrid(gridSpacing) {
     // console.log("Grid");
@@ -246,6 +247,21 @@ export const DrawingBoard = () => {
     });
   }, [lines, angles]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener("pointerdown", handleMouseDown);
+      canvas.addEventListener("pointerup", handleMouseUp);
+      canvas.addEventListener("pointermove", handleMouseMove);
+    }
+
+    return () => {
+      canvas.removeEventListener("pointerdown", handleMouseDown);
+      canvas.removeEventListener("pointerup", handleMouseUp);
+      canvas.removeEventListener("pointermove", handleMouseMove);
+    };
+  }, []);
+
   const handleClearCanvas = () => {
     namePointer.current = 65;
     setLines([]);
@@ -260,9 +276,6 @@ export const DrawingBoard = () => {
           ref={canvasRef}
           height={HEIGHT}
           width={WIDTH}
-          onPointerDown={handleMouseDown}
-          onPointerUp={handleMouseUp}
-          onPointerMove={handleMouseMove}
           style={{ cursor: toolActive ? "crosshair" : "default" }}
         />
         <div className="toolBox">
@@ -274,7 +287,11 @@ export const DrawingBoard = () => {
           >
             <PiLineSegmentBold />
           </button>
-          <button onClick={handleClearCanvas}>
+          <button
+            onClick={() => {
+              setSelectActive(!selectActive);
+            }}
+          >
             <BiSolidHand />
           </button>
           <button onClick={handleClearCanvas}>
