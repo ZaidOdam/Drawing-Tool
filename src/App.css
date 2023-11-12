@@ -1,0 +1,33 @@
+.canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding-top: 20px;
+}
+
+canvas {
+  border: 1px solid black;
+  cursor: crosshair;
+}
+
+.toolBox {
+  margin-top: 20px;
+}
+
+.toolBox button {
+  font-size: 24px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  padding: 5px 15px;
+  background-color: #fff1a9;
+  color: #000;
+  border: none;
+  cursor: pointer;
+}
+
+.toolBox button:hover, 
+button.active {
+  background-color: #f0e196;
+}
+
