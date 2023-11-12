@@ -10,6 +10,7 @@ import {
 } from "../utils/helper";
 import { AiOutlineClear } from "react-icons/ai";
 import { PiLineSegmentBold } from "react-icons/pi";
+import { BiSolidHand } from "react-icons/bi";
 
 const WIDTH = window.innerWidth * 0.8;
 const HEIGHT = 500;
@@ -147,6 +148,7 @@ export const DrawingBoard = () => {
   };
 
   const handleMouseDown = (e) => {
+    e.preventDefault();
     if (!toolActive) return;
     const canvas = canvasRef.current;
     const { x, y } = getPointOnCanvas(e, canvas);
@@ -167,6 +169,7 @@ export const DrawingBoard = () => {
   };
 
   const handleMouseMove = (e) => {
+    e.preventDefault();
     if (!startPoint) return;
     const canvas = canvasRef.current;
     // const ctx = canvas.getContext("2d");
@@ -196,6 +199,7 @@ export const DrawingBoard = () => {
   };
 
   const handleMouseUp = (e) => {
+    e.preventDefault();
     const canvas = canvasRef.current;
     const endPoint = getPointOnCanvas(e, canvas);
 
@@ -256,12 +260,9 @@ export const DrawingBoard = () => {
           ref={canvasRef}
           height={HEIGHT}
           width={WIDTH}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleMouseDown}
-          onTouchEnd={handleMouseUp}
-          onTouchMove={handleMouseMove}
+          onPointerDown={handleMouseDown}
+          onPointerUp={handleMouseUp}
+          onPointerMove={handleMouseMove}
           style={{ cursor: toolActive ? "crosshair" : "default" }}
         />
         <div className="toolBox">
@@ -272,6 +273,9 @@ export const DrawingBoard = () => {
             className={toolActive ? "active" : ""}
           >
             <PiLineSegmentBold />
+          </button>
+          <button onClick={handleClearCanvas}>
+            <BiSolidHand />
           </button>
           <button onClick={handleClearCanvas}>
             <AiOutlineClear />
